@@ -1,4 +1,4 @@
-# Twofront Technical Challenge
+# Task Manager — Real-time notifications via Email & SMS
 
 Single-page app combining real-time task management with simulated Email/SMS notifications.
 
@@ -60,13 +60,13 @@ this app on real infrastructure. See `IMPLEMENTATION_PLAN.md` §1.1 for details.
 
 ## Features
 
-### Required (PRD §3)
+### Core
 
 - [ ] Tasks panel — add, list pending, complete, list completed.
 - [ ] Emails panel — immediate notification on add + 1-minute recurring summary.
 - [ ] SMS panel — recurring summary on Fibonacci-minute cadence.
 
-### Bonuses (PRD §4)
+### Extras
 
 - [ ] Complete-task-from-email — signed link in each notification.
 - [ ] Playwright integration test (Page Object Model).
