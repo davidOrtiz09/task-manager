@@ -38,10 +38,11 @@ export default function EmailsPanel() {
       {emails.length === 0 ? (
         <p className="text-sm text-gray-400">No emails yet. Add a task to trigger one.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul data-testid="email-list" className="space-y-3">
           {emails.map((email) => (
             <li
               key={email.id}
+              data-testid="email-item"
               className="border border-gray-200 rounded-md px-4 py-3 flex flex-col gap-1"
             >
               <div className="flex items-start justify-between gap-2">
@@ -59,9 +60,8 @@ export default function EmailsPanel() {
               <p className="text-xs text-gray-500 whitespace-pre-wrap">{email.body}</p>
               {email.completionUrl && (
                 <a
+                  data-testid="complete-email-link"
                   href={email.completionUrl}
-                  target="_blank"
-                  rel="noreferrer"
                   className="self-start mt-1 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
                 >
                   Complete Task →

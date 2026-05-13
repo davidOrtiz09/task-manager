@@ -74,6 +74,7 @@ export default function TasksPanel() {
 
       <div className="flex gap-2">
         <input
+          data-testid="task-input"
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -82,6 +83,7 @@ export default function TasksPanel() {
           className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
+          data-testid="add-task-btn"
           onClick={handleAdd}
           disabled={!input.trim() || submitting}
           className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -94,13 +96,14 @@ export default function TasksPanel() {
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
           Pending ({pending.length})
         </h3>
-        {pending.length === 0 ? (
-          <p className="text-sm text-gray-400">No pending tasks.</p>
-        ) : (
-          <ul className="space-y-2">
-            {pending.map((task) => (
+        <ul data-testid="pending-list" className="space-y-2">
+          {pending.length === 0 ? (
+            <li className="text-sm text-gray-400">No pending tasks.</li>
+          ) : (
+            pending.map((task) => (
               <li
                 key={task.id}
+                data-testid="pending-item"
                 className="flex items-center justify-between gap-3 border border-gray-200 rounded-md px-3 py-2"
               >
                 <div className="flex-1 min-w-0">
@@ -108,26 +111,30 @@ export default function TasksPanel() {
                   <p className="text-xs text-gray-400">{formatAge(task.createdAt, now)}</p>
                 </div>
                 <button
+                  data-testid="complete-btn"
                   onClick={() => handleComplete(task.id)}
                   className="shrink-0 text-xs border border-gray-300 rounded px-2 py-1 hover:bg-gray-50 transition-colors"
                 >
                   Complete
                 </button>
               </li>
-            ))}
-          </ul>
-        )}
+            ))
+          )}
+        </ul>
       </div>
 
-      {completed.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            Completed ({completed.length})
-          </h3>
-          <ul className="space-y-2">
-            {completed.map((task) => (
+      <div>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          Completed ({completed.length})
+        </h3>
+        <ul data-testid="completed-list" className="space-y-2">
+          {completed.length === 0 ? (
+            <li className="text-sm text-gray-400">No completed tasks.</li>
+          ) : (
+            completed.map((task) => (
               <li
                 key={task.id}
+                data-testid="completed-item"
                 className="flex items-center justify-between gap-2 rounded-md px-3 py-2 bg-gray-50"
               >
                 <p className="text-sm text-gray-500 truncate flex-1">{task.title}</p>
@@ -135,10 +142,10 @@ export default function TasksPanel() {
                   {formatTimestamp(task.completedAt!)}
                 </p>
               </li>
-            ))}
-          </ul>
-        </div>
-      )}
+            ))
+          )}
+        </ul>
+      </div>
     </div>
   );
 }
