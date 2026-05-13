@@ -14,6 +14,7 @@ export const EmailSchema = z.object({
   createdAt: z.string().datetime(),
   kind: z.enum(["immediate", "recurring"]),
   taskId: z.string().uuid().optional(),
+  completionUrl: z.string().url().optional(),
 });
 
 export const SmsSchema = z.object({

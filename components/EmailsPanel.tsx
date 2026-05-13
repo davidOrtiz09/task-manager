@@ -57,6 +57,16 @@ export default function EmailsPanel() {
                 </span>
               </div>
               <p className="text-xs text-gray-500 whitespace-pre-wrap">{email.body}</p>
+              {email.completionUrl && (
+                <a
+                  href={email.completionUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="self-start mt-1 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Complete Task →
+                </a>
+              )}
               <p className="text-xs text-gray-400">{formatTimestamp(email.createdAt)}</p>
             </li>
           ))}

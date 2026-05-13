@@ -1,6 +1,9 @@
 import "server-only";
 import { addEmail, addSms, listTasks } from "./store";
+import { signTaskToken } from "./tokens";
 import type { Task } from "./schemas";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
 interface SchedulerState {
   emailIntervalId: ReturnType<typeof setInterval>;
@@ -53,11 +56,14 @@ function scheduleNextSms(state: SchedulerState) {
 }
 
 export function triggerImmediateEmail(task: Task) {
+  const token = signTaskToken(task.id);
+  const completionUrl = `${BASE_URL}/api/tasks/${task.id}/complete?token=${token}`;
   addEmail({
     subject: `New task added: ${task.title}`,
-    body: `A new task has been added:\n\n• ${task.title}\n\nUse the Task Manager to complete it.`,
+    body: `A new task has been added:\n\n• ${task.title}`,
     kind: "immediate",
     taskId: task.id,
+    completionUrl,
   });
 }
 
