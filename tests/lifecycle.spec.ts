@@ -53,7 +53,7 @@ test.describe("Task lifecycle", () => {
     await expect(home.sms.firstItem()).toContainText(title);
   });
 
-  test("completing a task via the email action link shows a confirmation page", async ({
+  test("completing a task via the email action button moves it to the completed list", async ({
     page,
   }) => {
     const home = new HomePage(page);
@@ -62,18 +62,13 @@ test.describe("Task lifecycle", () => {
     await page.goto("/");
     await home.tasks.addTask(title);
 
-    // Wait for the immediate email with the action link
-    const link = home.emails.completeLink(`New task added: ${title}`);
-    await expect(link).toBeVisible({ timeout: 8000 });
+    // Wait for the immediate email with the action button
+    const btn = home.emails.completeLink(`New task added: ${title}`);
+    await expect(btn).toBeVisible({ timeout: 8000 });
 
-    // Click the link — navigates to the confirmation page
-    await link.click();
+    // Click — stays on the same page; polling moves the task within ~2 s
+    await btn.click();
 
-    await expect(page).toHaveTitle("Task completed");
-    await expect(page.locator("h1")).toContainText("Task completed");
-
-    // Go back to the app and verify the task moved to completed
-    await page.getByRole("link", { name: "Back to Task Manager" }).click();
     await expect(home.tasks.completedItem(title)).toBeVisible({ timeout: 6000 });
     await expect(home.tasks.pendingItem(title)).not.toBeVisible();
   });

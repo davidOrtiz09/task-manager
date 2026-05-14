@@ -59,13 +59,13 @@ export default function EmailsPanel() {
               </div>
               <p className="text-xs text-gray-500 whitespace-pre-wrap">{email.body}</p>
               {email.completionUrl && (
-                <a
+                <button
                   data-testid="complete-email-link"
-                  href={email.completionUrl}
+                  onClick={() => fetch(email.completionUrl!)}
                   className="self-start mt-1 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
                 >
                   Complete Task →
-                </a>
+                </button>
               )}
               <p className="text-xs text-gray-400">{formatTimestamp(email.createdAt)}</p>
             </li>
