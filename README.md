@@ -20,69 +20,60 @@ All three panels are visible simultaneously — no routing.
 
 ---
 
-## Running with Docker
+## Getting Started
 
-No Node.js installation required — just Docker.
+### Docker (no Node.js required)
 
-```bash
-docker compose up --build
-```
+| Goal | Command |
+|---|---|
+| Run the app | `docker compose up --build` |
+| Unit tests | `docker compose --profile test-unit run --rm test-unit` |
+| E2E tests | `docker compose --profile test-e2e up --build --exit-code-from test-e2e` |
+| Tear down e2e | `docker compose --profile test-e2e down` |
 
-Open [http://localhost:3000](http://localhost:3000). That's it.
+Open [http://localhost:3000](http://localhost:3000) after starting the app.
 
-> The image uses a 3-stage build (`deps → builder → runner`) with Next.js
-> `output: "standalone"` so the final layer contains only what's needed to run.
+The E2E run starts a dedicated app instance with the fast SMS cadence (`TEST_SMS_INTERVAL_MS=3000`), waits for it to be healthy, then runs all 6 Playwright tests.
 
-### Running tests with Docker
-
-**Unit tests** (no browser needed):
-
-```bash
-docker compose --profile test-unit run --rm test-unit
-```
-
-**E2E tests** (Playwright + Chromium, fully in Docker — no Node.js required):
-
-```bash
-docker compose --profile test-e2e up --build --exit-code-from test-e2e
-```
-
-This starts a dedicated app instance with the fast SMS cadence (`TEST_SMS_INTERVAL_MS=3000`),
-waits for it to be healthy, runs all 6 Playwright tests, then exits with Playwright's exit code.
-
-Tear down after the run:
-
-```bash
-docker compose --profile test-e2e down
-```
+> The image uses a 3-stage build (`deps → builder → runner`) with Next.js `output: "standalone"` so the production layer contains only what's needed to run.
 
 ---
 
-## Getting Started (local dev)
+### Local development (Node.js 20+)
 
 ```bash
-# 1. Install dependencies
+# Install dependencies
 npm install
 
-# 2. (First time only) Install Playwright browser
-npx playwright install chromium
+# Start the dev server → http://localhost:3000
+npm run dev
 
-# 3. Start the dev server
-npm run dev        # → http://localhost:3000
+# Unit tests (Vitest)
+npm run test:unit
 
-# 4. Run E2E tests (requires dev server or starts one automatically)
+# E2E tests — Playwright starts its own dev server automatically
 npm run test:e2e
 
-# 5. Production build check
+# View the last E2E report
+npx playwright show-report
+
+# Production build check
 npm run build
 ```
 
-### Optional environment variables
+First time running E2E locally, install the browser once:
+
+```bash
+npx playwright install chromium
+```
+
+### Environment variables
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | Base URL embedded in email action links |
 | `TOKEN_SECRET` | `dev-secret-change-in-production` | HMAC key for task completion tokens |
+| `TEST_SMS_INTERVAL_MS` | _(unset — Fibonacci minutes)_ | Override SMS cadence for tests (e.g. `3000`) |
 
 ---
 
