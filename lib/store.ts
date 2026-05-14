@@ -9,7 +9,6 @@ interface Store {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __store__: Store | undefined;
 }
 
