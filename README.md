@@ -1,60 +1,112 @@
 # Task Manager — Real-time notifications via Email & SMS
 
-Single-page app combining real-time task management with simulated Email/SMS notifications.
-
-> **Status:** scaffolding. See [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) for the full
-> build plan, phased commits, and architectural decisions.
+A single-page app that combines real-time task management with simulated multi-channel
+notifications. Add a task and an email fires instantly; a recurring email summary arrives
+every minute; SMS summaries follow a Fibonacci-minute cadence (1, 1, 2, 3, 5, 8… min).
+All three panels are visible simultaneously — no routing.
 
 ---
 
 ## Tech Stack
 
-- **Next.js 15** (App Router) — Server & Client Components used deliberately.
-- **TypeScript** — strict mode.
-- **React 19**.
-- **Zod** — runtime validation at every API boundary (request + response + client parse).
-- **Tailwind CSS**.
-- **Playwright** — E2E integration test using the Page Object Model (bonus).
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Next.js 15 (App Router) | Server + Client Components used deliberately |
+| Language | TypeScript — strict mode | Compile-time + runtime safety |
+| UI library | React 19 | Server Components for shell, Client for interactivity |
+| Validation | Zod | Runtime schema validation at every API boundary |
+| Styling | Tailwind CSS | Utility-first, no extra build step |
+| Testing | Playwright + Page Object Model | Full lifecycle E2E coverage |
 
 ---
 
 ## Getting Started
 
 ```bash
+# 1. Install dependencies
 npm install
-npm run dev          # http://localhost:3000
-npm run build        # production build (must pass clean)
-npm run test:e2e     # Playwright lifecycle test
+
+# 2. (First time only) Install Playwright browser
+npx playwright install chromium
+
+# 3. Start the dev server
+npm run dev        # → http://localhost:3000
+
+# 4. Run E2E tests (requires dev server or starts one automatically)
+npm run test:e2e
+
+# 5. Production build check
+npm run build
 ```
+
+### Optional environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | Base URL embedded in email action links |
+| `TOKEN_SECRET` | `dev-secret-change-in-production` | HMAC key for task completion tokens |
 
 ---
 
-## Architecture (preview — fully written up in Phase 8)
+## Architecture
 
 ```
-┌───────────────────────────────────────────────────────────┐
-│  app/page.tsx  (Server Component — three-panel grid)      │
-│  ┌───────────────┬───────────────┬───────────────┐        │
-│  │ TasksPanel    │ EmailsPanel   │ SmsPanel      │        │
-│  │ (client)      │ (client)      │ (client)      │        │
-│  └───────┬───────┴───────┬───────┴───────┬───────┘        │
-│          │ poll /api/... every 2s                          │
-│  ┌───────▼───────────────▼───────────────▼───────┐        │
-│  │  Route Handlers (app/api/**)  — Zod-validated │        │
-│  └───────────────────┬───────────────────────────┘        │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  lib/store.ts  (in-memory singleton — swap for DB)  │  │
-│  └────▲──────────────────────────────────────────────┬─┘  │
-│       │                                              │    │
-│  ┌────┴─────────────────────────────────────────────┐│    │
-│  │  lib/scheduler.ts  (1-min email + Fibonacci SMS) ││    │
-│  └──────────────────────────────────────────────────┘│    │
-└───────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  app/page.tsx  (Server Component — static three-panel shell) │
+│  ┌────────────────┬────────────────┬────────────────┐        │
+│  │  TasksPanel    │  EmailsPanel   │  SmsPanel      │        │
+│  │  (Client)      │  (Client)      │  (Client)      │        │
+│  └───────┬────────┴───────┬────────┴────────┬───────┘        │
+│          │   poll /api/… every 2 s           │               │
+│  ┌───────▼────────────────▼─────────────────▼───────┐        │
+│  │  Route Handlers  app/api/**  (Zod-validated)      │        │
+│  └───────────────────────┬───────────────────────────┘        │
+│  ┌──────────────────────────────────────────────────┐         │
+│  │  lib/store.ts  — in-memory singleton (swap→ DB)  │         │
+│  └──────▲──────────────────────────────────────┬────┘         │
+│         │  reads/writes                        │              │
+│  ┌──────┴──────────────────────────────────────┐              │
+│  │  lib/scheduler.ts  — singleton timers        │              │
+│  │  • setInterval 60 s  → recurring email       │              │
+│  │  • setTimeout fib(n) min → Fibonacci SMS     │              │
+│  └──────────────────────────────────────────────┘              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-The mock server is the *production* shape: Route Handlers + Zod schemas + a storage layer.
-Replacing `lib/store.ts` with a real database client is the only change required to ship
-this app on real infrastructure. See `IMPLEMENTATION_PLAN.md` §1.1 for details.
+### Server vs Client Components
+
+| Component | Type | Reason |
+|---|---|---|
+| `app/page.tsx` | Server | Static layout shell; no client state needed |
+| `TasksPanel` | Client | Form input, live time-age ticker, mutations |
+| `EmailsPanel` | Client | Polling, dynamic list updates |
+| `SmsPanel` | Client | Polling, dynamic list updates |
+| `lib/store.ts` | Server-only | `import "server-only"` — guards against accidental client import |
+| `lib/scheduler.ts` | Server-only | Timer singleton; must not run in the browser |
+
+### Scheduler design
+
+`instrumentation.ts` (Next.js startup hook) calls `startScheduler()` once.
+A `globalThis.__scheduler__` guard prevents double-initialisation on dev-mode HMR.
+
+```
+startScheduler()
+  ├── setInterval(emailTick, 60_000)      // recurring email every 60 s
+  └── scheduleNextSms(state)              // kicks off the Fibonacci chain
+        └── setTimeout(smsTick, fib(n) × 60_000)
+              └── on fire: send SMS → smsFibIndex++ → scheduleNextSms(state)
+```
+
+Fibonacci sequence of delays: **1, 1, 2, 3, 5, 8, 13, 21 …** minutes.
+
+### Zod on all API boundaries
+
+- **Incoming** — every `POST` body is `.safeParse()`d before the handler logic runs.
+- **Outgoing** — response shapes match the exported Zod schemas.
+- **Client** — every `fetch()` response is parsed with `z.array(Schema).safeParse()`
+  before updating state. A parse failure silently no-ops rather than crashing the UI.
+- **Types** — all TypeScript types are `z.infer<typeof Schema>`, so runtime and
+  compile-time definitions can never drift apart.
 
 ---
 
@@ -62,22 +114,45 @@ this app on real infrastructure. See `IMPLEMENTATION_PLAN.md` §1.1 for details.
 
 ### Core
 
-- [ ] Tasks panel — add, list pending, complete, list completed.
-- [ ] Emails panel — immediate notification on add + 1-minute recurring summary.
-- [ ] SMS panel — recurring summary on Fibonacci-minute cadence.
+- [x] Tasks panel — add task, live time-age on pending rows, Complete button, completed list with timestamp.
+- [x] Emails panel — immediate notification on task add + 1-minute recurring summary.
+- [x] SMS panel — recurring summary on Fibonacci-minute cadence.
 
 ### Extras
 
-- [ ] Complete-task-from-email — signed link in each notification.
-- [ ] Playwright integration test (Page Object Model).
+- [x] Complete-task-from-email — each notification email contains a signed "Complete Task →" action link. Clicking it verifies an HMAC-SHA256 token and marks the task complete without requiring a session.
+- [x] Playwright integration test (Page Object Model) — three lifecycle scenarios: add→email, complete via button, complete via email link round-trip.
+
+---
+
+## Mock → Real swap path
+
+The mock server is the **production shape**. Route Handlers, Zod schemas, and frontend
+code are identical to what a real deployment would use. Only `lib/store.ts` is mocked.
+
+To swap to a real database:
+
+```
+# 1. Install your DB client
+npm install @prisma/client   # or drizzle-orm, etc.
+
+# 2. Replace lib/store.ts with DB calls
+#    All exported function signatures stay the same:
+#    addTask(), completeTask(), listTasks(), addEmail(), …
+
+# 3. Nothing else changes — route handlers, schemas, components
+#    and tests are all unaffected.
+```
 
 ---
 
 ## Trade-offs & Future Work
 
-To be expanded in Phase 8 (see `IMPLEMENTATION_PLAN.md`).
-
-Highlights:
-- **Polling** chosen over SSE/WebSockets for simplicity. SSE is the production upgrade.
-- **In-memory store** dies on server restart. Persistence is a one-file swap.
-- **HMAC tokens** on email links avoid needing a session for the round-trip bonus.
+| Decision | What was chosen | Production upgrade |
+|---|---|---|
+| Real-time | Client polling every 2 s | Server-Sent Events or WebSockets |
+| Persistence | In-memory (resets on restart) | Postgres + Prisma/Drizzle |
+| Auth | None — single anonymous user | NextAuth or Clerk |
+| Scheduler | `setInterval` singleton in Node process | BullMQ, Inngest, or Vercel Cron |
+| SMS intervals | Fibonacci minutes (1, 1, 2, 3, 5…) | Configurable via env or UI |
+| E2E timers | 1-min email + Fibonacci SMS not tested in CI | Reduce intervals via `TEST_MODE` env var |
