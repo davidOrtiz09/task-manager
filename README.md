@@ -35,26 +35,25 @@ Open [http://localhost:3000](http://localhost:3000). That's it.
 
 ### Running tests with Docker
 
-**Unit tests** (no browser needed — runs inside the builder stage):
+**Unit tests** (no browser needed):
 
 ```bash
-docker compose run --rm test-unit
+docker compose --profile test-unit run --rm test-unit
 ```
 
-**E2E tests** require a browser so they still need Node.js locally.
-With the Docker app already running (`docker compose up --build`), point
-Playwright at it instead of starting its own dev server:
+**E2E tests** (Playwright + Chromium, fully in Docker — no Node.js required):
 
 ```bash
-# install deps once
-npm install
-npx playwright install chromium
+docker compose --profile test-e2e up --build --exit-code-from test-e2e
+```
 
-# run against the Docker app (SMS test is skipped — server needs TEST_SMS_INTERVAL_MS)
-BASE_URL=http://localhost:3000 npm run test:e2e
+This starts a dedicated app instance with the fast SMS cadence (`TEST_SMS_INTERVAL_MS=3000`),
+waits for it to be healthy, runs all 6 Playwright tests, then exits with Playwright's exit code.
 
-# or let Playwright start its own dev server (all tests including SMS)
-npm run test:e2e
+Tear down after the run:
+
+```bash
+docker compose --profile test-e2e down
 ```
 
 ---

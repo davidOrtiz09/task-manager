@@ -30,3 +30,14 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
+
+# ---- e2e: Playwright test runner ----
+# Debian-based so `playwright install --with-deps` resolves all browser libs.
+FROM node:20 AS e2e
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+RUN npx playwright install --with-deps chromium
+COPY . .
+ENV CI=true
+CMD ["npm", "run", "test:e2e"]

@@ -1,18 +1,51 @@
 services:
-  # Production app — docker compose up --build
+  # ── Production ──────────────────────────────────────────────────────────────
   app:
     build: .
     ports:
       - "3000:3000"
     environment:
-      # Override with a strong secret before deploying anywhere public.
       TOKEN_SECRET: change-me-in-production
 
-  # Unit tests — docker compose run --rm test-unit
-  # Uses the builder stage (has source + devDependencies); no browser needed.
+  # ── Unit tests ───────────────────────────────────────────────────────────────
+  # docker compose --profile test-unit run --rm test-unit
   test-unit:
     build:
       context: .
       target: builder
     command: npm run test:unit
-    profiles: ["test"]
+    profiles: ["test-unit"]
+
+  # ── E2E tests ────────────────────────────────────────────────────────────────
+  # docker compose --profile test-e2e up --build --exit-code-from test-e2e
+
+  # App instance with short SMS interval so the SMS test finishes in seconds.
+  app-test:
+    build:
+      context: .
+      target: runner
+    environment:
+      TOKEN_SECRET: test-secret
+      TEST_SMS_INTERVAL_MS: "3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/api/tasks').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    profiles: ["test-e2e"]
+
+  # Playwright runner — waits for app-test to be healthy before starting.
+  test-e2e:
+    build:
+      context: .
+      target: e2e
+    environment:
+      BASE_URL: http://app-test:3000
+    depends_on:
+      app-test:
+        condition: service_healthy
+    profiles: ["test-e2e"]
