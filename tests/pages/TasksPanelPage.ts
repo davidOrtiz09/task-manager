@@ -1,4 +1,5 @@
 import type { Page, Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 export class TasksPanelPage {
   private readonly addInput: Locator;
@@ -16,6 +17,9 @@ export class TasksPanelPage {
   async addTask(title: string): Promise<void> {
     await this.addInput.fill(title);
     await this.addButton.click();
+    // Wait for the submission to complete so back-to-back addTask calls are safe.
+    // The button reverts to "Add Task" only after setSubmitting(false) fires.
+    await expect(this.addButton).toHaveText("Add Task");
   }
 
   pendingItem(title: string): Locator {
