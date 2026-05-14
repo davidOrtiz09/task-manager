@@ -20,7 +20,22 @@ All three panels are visible simultaneously — no routing.
 
 ---
 
-## Getting Started
+## Running with Docker
+
+No Node.js installation required — just Docker.
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:3000](http://localhost:3000). That's it.
+
+> The image uses a 3-stage build (`deps → builder → runner`) with Next.js
+> `output: "standalone"` so the final layer contains only what's needed to run.
+
+---
+
+## Getting Started (local dev)
 
 ```bash
 # 1. Install dependencies
