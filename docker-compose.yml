@@ -1,4 +1,5 @@
 services:
+  # Production app — docker compose up --build
   app:
     build: .
     ports:
@@ -6,3 +7,12 @@ services:
     environment:
       # Override with a strong secret before deploying anywhere public.
       TOKEN_SECRET: change-me-in-production
+
+  # Unit tests — docker compose run --rm test-unit
+  # Uses the builder stage (has source + devDependencies); no browser needed.
+  test-unit:
+    build:
+      context: .
+      target: builder
+    command: npm run test:unit
+    profiles: ["test"]

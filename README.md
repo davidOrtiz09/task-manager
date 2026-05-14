@@ -33,6 +33,30 @@ Open [http://localhost:3000](http://localhost:3000). That's it.
 > The image uses a 3-stage build (`deps → builder → runner`) with Next.js
 > `output: "standalone"` so the final layer contains only what's needed to run.
 
+### Running tests with Docker
+
+**Unit tests** (no browser needed — runs inside the builder stage):
+
+```bash
+docker compose run --rm test-unit
+```
+
+**E2E tests** require a browser so they still need Node.js locally.
+With the Docker app already running (`docker compose up --build`), point
+Playwright at it instead of starting its own dev server:
+
+```bash
+# install deps once
+npm install
+npx playwright install chromium
+
+# run against the Docker app (SMS test is skipped — server needs TEST_SMS_INTERVAL_MS)
+BASE_URL=http://localhost:3000 npm run test:e2e
+
+# or let Playwright start its own dev server (all tests including SMS)
+npm run test:e2e
+```
+
 ---
 
 ## Getting Started (local dev)
