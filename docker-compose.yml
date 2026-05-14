@@ -1,7 +1,9 @@
 services:
   # ── Production ──────────────────────────────────────────────────────────────
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     ports:
       - "3000:3000"
     environment:
