@@ -86,8 +86,10 @@ npm run build
 
 ### Scheduler design
 
-`instrumentation.ts` (Next.js startup hook) calls `startScheduler()` once.
-A `globalThis.__scheduler__` guard prevents double-initialisation on dev-mode HMR.
+`startScheduler()` is called the first time a task is created (inside `triggerImmediateEmail`),
+so the 60-second recurring-email interval begins from when the user actually has work to track.
+A `globalThis.__scheduler__` guard prevents double-initialisation on subsequent task adds and
+dev-mode HMR reloads.
 
 ```
 startScheduler()
@@ -143,6 +145,14 @@ npm install @prisma/client   # or drizzle-orm, etc.
 # 3. Nothing else changes — route handlers, schemas, components
 #    and tests are all unaffected.
 ```
+
+---
+
+## Implementation Notes
+
+The original thinking process — architectural decisions, phase-by-phase build plan, risk
+mitigations, and trade-off rationale — is captured in
+[IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md).
 
 ---
 
