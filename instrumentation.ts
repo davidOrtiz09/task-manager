@@ -1,6 +1,5 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { startScheduler } = await import("./lib/scheduler");
-    startScheduler();
-  }
+  // Scheduler is started lazily on first task creation via triggerImmediateEmail,
+  // so the recurring email interval begins from when the user actually has work
+  // to track — not from server boot.
 }
