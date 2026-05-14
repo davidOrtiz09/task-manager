@@ -22,5 +22,9 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      // Fixed 3 s SMS cadence for tests; production uses the Fibonacci sequence.
+      TEST_SMS_INTERVAL_MS: "3000",
+    },
   },
 });

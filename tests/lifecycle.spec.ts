@@ -39,6 +39,20 @@ test.describe("Task lifecycle", () => {
     await expect(home.tasks.pendingItem(title)).not.toBeVisible();
   });
 
+  test("SMS fires on schedule after a task is added", async ({ page }) => {
+    const home = new HomePage(page);
+    const title = `SMS test ${Date.now()}`;
+
+    await page.goto("/");
+    await home.tasks.addTask(title);
+    await expect(home.tasks.pendingItem(title)).toBeVisible({ timeout: 6000 });
+
+    // TEST_SMS_INTERVAL_MS=3000 in playwright.config.ts so the first SMS fires
+    // within 3 s; allow 12 s to absorb any scheduling jitter.
+    await expect(home.sms.firstItem()).toBeVisible({ timeout: 12000 });
+    await expect(home.sms.firstItem()).toContainText(title);
+  });
+
   test("completing a task via the email action link shows a confirmation page", async ({
     page,
   }) => {

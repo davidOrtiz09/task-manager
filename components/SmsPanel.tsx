@@ -43,10 +43,11 @@ export default function SmsPanel() {
           No messages yet. First SMS arrives after 1 minute.
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul data-testid="sms-list" className="space-y-3">
           {messages.map((msg) => (
             <li
               key={msg.id}
+              data-testid="sms-item"
               className="border border-gray-200 rounded-md px-4 py-3 flex flex-col gap-1"
             >
               <p className="text-xs text-gray-500 whitespace-pre-wrap">{msg.body}</p>

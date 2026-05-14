@@ -48,9 +48,15 @@ function sendFibonacciSms(state: SchedulerState) {
   scheduleNextSms(state);
 }
 
+// In test mode TEST_SMS_INTERVAL_MS overrides the Fibonacci delay and fibIndex
+// is not advanced, giving a predictable fixed cadence for automated tests.
+const TEST_SMS_MS = process.env.TEST_SMS_INTERVAL_MS
+  ? parseInt(process.env.TEST_SMS_INTERVAL_MS, 10)
+  : null;
+
 function scheduleNextSms(state: SchedulerState) {
-  const delayMs = fib(state.smsFibIndex) * 60_000;
-  state.smsFibIndex++;
+  const delayMs = TEST_SMS_MS ?? fib(state.smsFibIndex) * 60_000;
+  if (!TEST_SMS_MS) state.smsFibIndex++;
   state.smsTimeoutId = setTimeout(() => sendFibonacciSms(state), delayMs);
 }
 
