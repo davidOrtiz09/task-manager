@@ -82,3 +82,7 @@ export function startScheduler() {
   globalThis.__scheduler__ = state;
   scheduleNextSms(state);
 }
+
+// Auto-start on first import by any route handler — the globalThis guard
+// prevents double-start even if instrumentation.ts also calls startScheduler().
+startScheduler();
