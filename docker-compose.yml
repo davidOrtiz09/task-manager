@@ -27,6 +27,9 @@ services:
     environment:
       TOKEN_SECRET: test-secret
       TEST_SMS_INTERVAL_MS: "3000"
+      # Must match the hostname the Playwright browser uses to reach this
+      # container, so email completionUrls resolve correctly from the browser.
+      NEXT_PUBLIC_BASE_URL: http://app-test:3000
     healthcheck:
       test:
         - CMD
