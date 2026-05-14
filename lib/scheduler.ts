@@ -15,7 +15,7 @@ declare global {
   var __scheduler__: SchedulerState | undefined;
 }
 
-function fib(n: number): number {
+export function fib(n: number): number {
   if (n <= 1) return 1;
   let a = 1, b = 1;
   for (let i = 2; i <= n; i++) [a, b] = [b, a + b];
@@ -61,6 +61,10 @@ function scheduleNextSms(state: SchedulerState) {
 }
 
 export function triggerImmediateEmail(task: Task) {
+  // Start the scheduler on first task creation so the 60 s recurring email
+  // interval begins from when the user actually has work to track, not from
+  // whenever the module was first imported (page load).
+  startScheduler();
   const token = signTaskToken(task.id);
   const completionUrl = `${BASE_URL}/api/tasks/${task.id}/complete?token=${token}`;
   addEmail({
@@ -82,7 +86,3 @@ export function startScheduler() {
   globalThis.__scheduler__ = state;
   scheduleNextSms(state);
 }
-
-// Auto-start on first import by any route handler — the globalThis guard
-// prevents double-start even if instrumentation.ts also calls startScheduler().
-startScheduler();
